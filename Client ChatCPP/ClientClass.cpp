@@ -80,7 +80,6 @@ void client::connectToServer(const char* serverAddress)
 
 void client::sendMessages(const char* message) 
 {
-    
     int sendResult = send(_client_fd, message, strlen(message), 0);
     if (sendResult == SOCKET_ERROR)
     {
