@@ -21,9 +21,15 @@
     <ClCompile Include="ClientClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PDU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientClass.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PDU.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

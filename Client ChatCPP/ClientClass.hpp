@@ -9,26 +9,19 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-constexpr int PORT = 12345;
-constexpr int BUFFER = 1024;
 
-/**
- * @class client
- * @brief Handles client-side socket communication.
- */
+
+
 class client
 {
 public:
-    /**
-     * @brief Sends a welcome message.
-     */
+    
     void welcomeMessage();
 
-    /**
-     * @brief Constructor. Initializes the client object.
-     */
-    client();
+    
+    client() = default;
 
+    void exitServer();
     /**
      * @brief Destructor. Cleans up resources.
      */
@@ -40,34 +33,28 @@ public:
      */
     std::string setName();
 
-    /**
-     * @brief Initializes the Winsock library.
-     */
     void initializeWinsock();
 
-    /**
-     * @brief Creates a socket.
-     */
     void createSocket();
 
     /**
      * @brief Connects the socket to the server.
      * @param serverAddress The server's address as a C-string.
      */
-    void connectToServer(const char* serverAddress);
+    void connectToServer(const std::string serverAddress);
 
     /**
      * @brief Handles sending messages to the server.
      * @param message The message to send as a C-string.
      */
-    void sendMessages(const char* message);
+    void sendMessages(const std::string message);
 
     /**
      * @brief Manages the Protocol Data Unit (PDU) for the client.
      * @param clientMessage The message from the client.
      * @param name The name of the client.
      */
-    void mangePDU(const char* clientMessage, std::string name);
+    void mangePDU(std::string clientMessage, std::string name);
 
     /**
      * @brief Gets the current time.
@@ -92,10 +79,11 @@ public:
     void sendMessageThread();
 
 private:
+    static constexpr int PORT = 12345;
+    static constexpr int BUFFER = 1024;
     SOCKET _client_fd; ///< The client socket descriptor.
     sockaddr_in _serverAddr; ///< The server address structure.
     std::string name; ///< The name of the client.
 };
 
 #endif
-

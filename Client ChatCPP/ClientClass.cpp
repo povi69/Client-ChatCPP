@@ -12,9 +12,10 @@ void client::welcomeMessage()
     std::cout << "Welcome to the Client\n";
 }
 
-client::client()
+void client::exitServer()
 {
-
+    WSACleanup();
+    exit(1);
 }
 
 client::~client()
@@ -35,7 +36,7 @@ void client::initializeWinsock()
     WSADATA ws;
     if (WSAStartup(MAKEWORD(2, 2), &ws) == -1) {
         std::cout << "WSA Failed to Initialize\n";
-        exit(1);
+        exitServer();
     }
     else
     {
@@ -49,8 +50,7 @@ void client::createSocket()
     if (_client_fd == INVALID_SOCKET)
     {
         std::cout << "Failed to create socket\n";
-        WSACleanup();
-        exit(1);
+        exitServer();
     }
     else
     {
@@ -58,19 +58,18 @@ void client::createSocket()
     }
 }
 
-void client::connectToServer(const char* serverAddress) 
+void client::connectToServer(const std::string serverAddress) 
 {
     _serverAddr.sin_family = AF_INET;
     _serverAddr.sin_port = htons(PORT);
-    inet_pton(AF_INET, serverAddress, &_serverAddr.sin_addr);
+    inet_pton(AF_INET, serverAddress.c_str(), &_serverAddr.sin_addr);
 
     int connectResult = connect(_client_fd, (sockaddr*)&_serverAddr, sizeof(_serverAddr));
     if (connectResult == SOCKET_ERROR)
     {
         std::cout << "Failed to connect to server\n";
         closesocket(_client_fd);
-        WSACleanup();
-        exit(1);
+        exitServer();
     }
     else
     {
@@ -78,23 +77,22 @@ void client::connectToServer(const char* serverAddress)
     }
 }
 
-void client::sendMessages(const char* message) 
+void client::sendMessages(const std::string message) 
 {
-    int sendResult = send(_client_fd, message, strlen(message), 0);
+    int sendResult = send(_client_fd, message.c_str(), strlen(message.c_str()), 0);
     if (sendResult == SOCKET_ERROR)
     {
         std::cout << "Failed to send message\n";
         closesocket(_client_fd);
-        WSACleanup();
-        exit(1);
+        exitServer();
     }
     else 
     {
-        std::cout << "Message sent\n";
+        std::cout << "Message sent\n"; 
     }
 }
 
-void client::mangePDU(const char* clientMessage,std::string name)
+void client::mangePDU(std::string clientMessage,std::string name)
 {
     std::string outputMessage;
     outputMessage = getCurrentTime() + " " + name + ": "+ clientMessage + "\n";
@@ -137,22 +135,21 @@ void client::receiveMessagesThread()
         {
             std::cout << "Received: " << buffer << std::endl;
         }
-        else if (bytesReceived == 0) 
+        else
         {
             std::cout << "Connection closed by the server." << std::endl;
             break;
         }
-        else 
-        {
-            break;
-        }
+        
     }
 }
 void client::Run()
 {
+    //threads for sending the receiving messages
     std::thread sendThread(&client::sendMessageThread, this);
     std::thread receiveThread(&client::receiveMessagesThread, this);
 
+    //Join makes sure that the thread has completed its execution before the program exits.
     sendThread.join();
     receiveThread.join();
 }
