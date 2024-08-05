@@ -79,7 +79,12 @@ void client::connectToServer(const std::string serverAddress)
 
 void client::sendMessages(const std::string message) 
 {
-    int sendResult = send(_client_fd, message.c_str(), strlen(message.c_str()), 0);
+    // Create a buffer of the exact size of the message
+    int messageLength = message.size();
+    const char* messageBuffer = message.c_str();
+
+    // Send the message
+    int sendResult = send(_client_fd, messageBuffer, messageLength, 0);
     if (sendResult == SOCKET_ERROR)
     {
         std::cout << "Failed to send message\n";
@@ -91,6 +96,7 @@ void client::sendMessages(const std::string message)
         std::cout << "Message sent\n"; 
     }
 }
+
 
 void client::mangePDU(std::string clientMessage,std::string name)
 {
@@ -112,12 +118,14 @@ void client::sendMessageThread()
     std::string name;
     name = setName();
     std::string message;
-    while (true) 
+    bool flag = false;
+    constexpr auto exitMessage = "exit";
+    while (!flag) 
     {
         std::getline(std::cin, message);
-        if (message == "exit") 
+        if (message == exitMessage) 
         {
-            break;
+            flag = true;
         }
         mangePDU(message.c_str(),name);
     }
@@ -140,7 +148,6 @@ void client::receiveMessagesThread()
             std::cout << "Connection closed by the server." << std::endl;
             break;
         }
-        
     }
 }
 void client::Run()
