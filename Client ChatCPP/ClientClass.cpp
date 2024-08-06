@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 
 void client::welcomeMessage()
@@ -12,11 +13,6 @@ void client::welcomeMessage()
     std::cout << "Welcome to the Client\n";
 }
 
-void client::exitServer()
-{
-    WSACleanup();
-    exit(1);
-}
 
 client::~client()
 {
@@ -27,16 +23,15 @@ client::~client()
 std::string client::setName()
 {
     std::cout << "enter your name: \n";
-    std::cin >> name;
-    return name;
+    std::cin >> _name;
+    return _name;
 }
 
 void client::initializeWinsock()
 {
     WSADATA ws;
-    if (WSAStartup(MAKEWORD(2, 2), &ws) == -1) {
-        std::cout << "WSA Failed to Initialize\n";
-        exitServer();
+    if (WSAStartup(WINSOCK_VERSION, &ws) == SOCKET_ERROR) {
+        throw std::runtime_error("WSA Failed to Initialize");
     }
     else
     {
@@ -49,8 +44,8 @@ void client::createSocket()
     _client_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (_client_fd == INVALID_SOCKET)
     {
-        std::cout << "Failed to create socket\n";
-        exitServer();
+        throw std::runtime_error("failed to Initialize socket");
+
     }
     else
     {
@@ -58,7 +53,7 @@ void client::createSocket()
     }
 }
 
-void client::connectToServer(const std::string serverAddress) 
+void client::connectToServer(const std::string& serverAddress) 
 {
     _serverAddr.sin_family = AF_INET;
     _serverAddr.sin_port = htons(PORT);
@@ -67,9 +62,8 @@ void client::connectToServer(const std::string serverAddress)
     int connectResult = connect(_client_fd, (sockaddr*)&_serverAddr, sizeof(_serverAddr));
     if (connectResult == SOCKET_ERROR)
     {
-        std::cout << "Failed to connect to server\n";
         closesocket(_client_fd);
-        exitServer();
+        throw std::runtime_error("failed to connect to the server");
     }
     else
     {
@@ -77,7 +71,7 @@ void client::connectToServer(const std::string serverAddress)
     }
 }
 
-void client::sendMessages(const std::string message) 
+void client::sendMessages(const std::string &message) 
 {
     // Create a buffer of the exact size of the message
     int messageLength = message.size();
@@ -87,9 +81,8 @@ void client::sendMessages(const std::string message)
     int sendResult = send(_client_fd, messageBuffer, messageLength, 0);
     if (sendResult == SOCKET_ERROR)
     {
-        std::cout << "Failed to send message\n";
         closesocket(_client_fd);
-        exitServer();
+        throw std::runtime_error("failed to send message");        
     }
     else 
     {
@@ -98,7 +91,7 @@ void client::sendMessages(const std::string message)
 }
 
 
-void client::mangePDU(std::string clientMessage,std::string name)
+void client::mangePDU(std::string clientMessage,std::string &name)
 {
     std::string outputMessage;
     outputMessage = getCurrentTime() + " " + name + ": "+ clientMessage + "\n";
@@ -120,7 +113,7 @@ void client::sendMessageThread()
     std::string message;
     bool flag = false;
     constexpr auto exitMessage = "exit";
-    while (!flag) 
+    while (flag)
     {
         std::getline(std::cin, message);
         if (message == exitMessage) 
@@ -131,25 +124,39 @@ void client::sendMessageThread()
     }
 }
 
-void client::receiveMessagesThread() 
+
+void client::receiveMessagesThread()
 {
-    char buffer[BUFFER];
+    std::vector<char> buffer(BUFFER);
     int bytesReceived;
     while (true)
     {
-        memset(buffer, 0, BUFFER);
-        bytesReceived = recv(_client_fd, buffer, BUFFER, 0);
+        // Resize buffer if needed
+        buffer.resize(BUFFER);
+
+        bytesReceived = recv(_client_fd, buffer.data(), BUFFER, 0);
         if (bytesReceived > 0)
         {
-            std::cout << "Received: " << buffer << std::endl;
+            // \0 the received data if it's less than the buffer size
+            if (bytesReceived < BUFFER) {
+                buffer[bytesReceived] = '\0';
+            }
+
+            std::cout << "Received: " << buffer.data() << std::endl;
         }
-        else
+        else if (bytesReceived == 0)
         {
             std::cout << "Connection closed by the server." << std::endl;
             break;
         }
+        else
+        {
+            std::cout << "Failed to receive data." << std::endl;
+            break;
+        }
     }
 }
+
 void client::Run()
 {
     //threads for sending the receiving messages

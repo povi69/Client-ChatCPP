@@ -21,7 +21,7 @@ public:
     
     client() = default;
 
-    void exitServer();
+    
     /**
      * @brief Destructor. Cleans up resources.
      */
@@ -41,20 +41,20 @@ public:
      * @brief Connects the socket to the server.
      * @param serverAddress The server's address as a C-string.
      */
-    void connectToServer(const std::string serverAddress);
+    void connectToServer(const std::string &serverAddress);
 
     /**
      * @brief Handles sending messages to the server.
      * @param message The message to send as a C-string.
      */
-    void sendMessages(const std::string message);
+    void sendMessages(const std::string &message);
 
     /**
      * @brief Manages the Protocol Data Unit (PDU) for the client.
      * @param clientMessage The message from the client.
      * @param name The name of the client.
      */
-    void mangePDU(std::string clientMessage, std::string name);
+    void mangePDU(std::string clientMessage, std::string &name);
 
     /**
      * @brief Gets the current time.
@@ -79,11 +79,11 @@ public:
     void sendMessageThread();
 
 private:
-    static constexpr int PORT = 12345;
-    static constexpr int BUFFER = 1024;
+    static constexpr auto PORT = 12345;
+    static constexpr auto BUFFER = 1024;
     SOCKET _client_fd; ///< The client socket descriptor.
     sockaddr_in _serverAddr; ///< The server address structure.
-    std::string name; ///< The name of the client.
+    std::string _name; ///< The name of the client.
 };
 
 #endif
